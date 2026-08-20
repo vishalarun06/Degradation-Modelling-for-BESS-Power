@@ -189,6 +189,10 @@ class DashboardStat:
 
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Wind-Solar and BESS Simulation", layout="wide")
+col1, col2, col3 = st.columns([2, 2, 1])
+
+with col3:
+    st.image("company_logo.png", width=200)
 st.image("company_logo.png", width=250)
 st.title("⚡ Wind Solar BESS Simulation")
 st.markdown("Upload your generation and consumption, fill in the parameters for the plant, and run the simulation!")
@@ -245,9 +249,9 @@ bess_capex = col13.number_input("BESS CAPEX", value=10, step=1)
 
 st.subheader("Maintenance Cost (Lakh Rs / MW / Year)")
 col14, col15, col16, col17 = st.columns(4)
-solar_maint = col14.number_input("Solar Maintenance (Rs)", value=5.0, step=0.5)
-wind_maint = col15.number_input("Wind Maintenance (Rs)", value=9.1, step=0.5)
-bess_maint = col16.number_input("BESS Maintenance (Rs)", value=1.0, step=0.5)
+solar_maint = col14.number_input("Solar Maintenance (Lakh Rs)", value=5.0, step=0.5)
+wind_maint = col15.number_input("Wind Maintenance (Lakh Rs)", value=9.1, step=0.5)
+bess_maint = col16.number_input("BESS Maintenance (Lakh Rs)", value=1.0, step=0.5)
 cost_esc = col17.number_input("Cost Escalation (%/yr)", value=3.0, step=0.5)
 
 st.subheader("Tariff")
