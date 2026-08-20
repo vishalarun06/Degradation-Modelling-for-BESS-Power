@@ -1,2 +1,15 @@
 [theme]
-base="dark"
+# The primary accent color (Orange from the Fourth Partner Energy logo)
+primaryColor = "#F37021"
+
+# Deep slate/navy-tinted dark background (softer than pure black)
+backgroundColor = "#121826"
+
+# Slightly lighter background for the sidebar, upload areas, or distinct containers
+secondaryBackgroundColor = "#1E293B"
+
+# Crisp light grey/white for comfortable readability
+textColor = "#F8FAFC"
+
+# Clean, modern font
+font = "sans serif"
