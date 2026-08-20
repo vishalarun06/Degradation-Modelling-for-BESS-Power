@@ -298,61 +298,61 @@ if st.button("Run Simulation", type="primary"):
         with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
                 
-            try:
-                # Initialize the dashboard class with UI inputs
-                dash = DashboardStat(
-                    gencons=temp_file_path,
-                    solar_capacity=solar_cap,
-                    wind_capacity=wind_cap,
-                    BESS_hours=bess_hours,
-                    max_SoC_perc=max_soc,
-                    min_SoC_perc=min_soc,
-                    solar_gen_degrad=solar_deg,
-                    wind_gen_degrad=wind_deg,
-                    BESS_capacity_degrad=bess_cap_deg,
-                    RTE_degrad=bess_rte_deg,
-                    solar_maintenance=solar_maint * 100000,
-                    wind_maintenance=wind_maint * 100000,
-                    BESS_maintenance=bess_maint * 100000,
-                    costs_escalation=cost_esc,
-                    tariff=tariff_input,
-                    solar_capex=solar_capex,
-                    wind_capex=wind_capex,
-                    BESS_capex=bess_capex,
-                    RTE=rte_year1
+        try:
+            # Initialize the dashboard class with UI inputs
+            dash = DashboardStat(
+                gencons=temp_file_path,
+                solar_capacity=solar_cap,
+                wind_capacity=wind_cap,
+                BESS_hours=bess_hours,
+                max_SoC_perc=max_soc,
+                min_SoC_perc=min_soc,
+                solar_gen_degrad=solar_deg,
+                wind_gen_degrad=wind_deg,
+                BESS_capacity_degrad=bess_cap_deg,
+                RTE_degrad=bess_rte_deg,
+                solar_maintenance=solar_maint * 100000,
+                wind_maintenance=wind_maint * 100000,
+                BESS_maintenance=bess_maint * 100000,
+                costs_escalation=cost_esc,
+                tariff=tariff_input,
+                solar_capex=solar_capex,
+                wind_capex=wind_capex,
+                BESS_capex=bess_capex,
+                RTE=rte_year1
+            )
+            
+            output_path = "Revenue_Costs_EBITDA_Table.xlsx"
+            results = dash.run_dashboard(irr_table_path=output_path)
+            
+            st.success("Optimisation successfully completed!")
+            st.balloons()
+            
+            # Display Metrics
+            st.subheader("Key Performance Indicators")
+            metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+            
+            # Displaying formatted numbers
+            irr_val = results["irr"]
+            metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
+            metric_col2.metric("Capex/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
+            metric_col3.metric("Effective Replacement with BESS", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
+            metric_col4.metric("Effective Replacement without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+            
+            # Output File Download
+            st.markdown("### Download Simulation Results")
+            with open(output_path, "rb") as out_file:
+                st.download_button(
+                    label="📊 Download Revenue, Costs & EBITDA Table",
+                    data=out_file,
+                    file_name="Revenue_Costs_EBITDA_Table.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
-                
-                output_path = "Revenue_Costs_EBITDA_Table.xlsx"
-                results = dash.run_dashboard(irr_table_path=output_path)
-                
-                st.success("Optimisation successfully completed!")
-                st.balloons()
-                
-                # Display Metrics
-                st.subheader("Key Performance Indicators")
-                metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-                
-                # Displaying formatted numbers
-                irr_val = results["irr"]
-                metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
-                metric_col2.metric("Capex/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
-                metric_col3.metric("Effective Replacement with BESS", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
-                metric_col4.metric("Effective Replacement without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
-                
-                # Output File Download
-                st.markdown("### Download Simulation Results")
-                with open(output_path, "rb") as out_file:
-                    st.download_button(
-                        label="📊 Download Revenue, Costs & EBITDA Table",
-                        data=out_file,
-                        file_name="Revenue_Costs_EBITDA_Table.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
             
-            except Exception as e:
-                st.error(f"An error occurred during simulation: {e}")
+        except Exception as e:
+            st.error(f"An error occurred during simulation: {e}")
             
-            finally:
+        finally:
                 # Clean up temporary uploaded file
-                if os.path.exists(temp_file_path):
-                    os.remove(temp_file_path)
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
