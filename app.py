@@ -295,13 +295,13 @@ if st.button("Run Simulation", type="primary"):
                 <p style="color: #9CA3AF;">Please wait, running financial models.</p>
             </div>
             """, unsafe_allow_html=True)
-        with open(temp_file_path, "wb") as f:
+        with open(uploaded_file, "wb") as f:
             f.write(uploaded_file.getbuffer())
                 
         try:
             # Initialize the dashboard class with UI inputs
             dash = DashboardStat(
-                gencons=temp_file_path,
+                gencons=uploaded_file,
                 solar_capacity=solar_cap,
                 wind_capacity=wind_cap,
                 BESS_hours=bess_hours,
