@@ -266,9 +266,35 @@ if st.button("Run Simulation", type="primary"):
     if uploaded_file is None:
         st.error("Please upload the filled-in template file before running")
     else:
-        with st.spinner("Running 25-year simulation..."):
-            # Pandas needs a file path to process multiple sheets cleanly in the logic
-            temp_file_path = "temp_uploaded_gencons.xlsx"
+
+        # Create an empty placeholder container for our custom loader
+        loader_placeholder = st.empty()
+        
+        # Inject custom HTML/CSS for a spinning turbine icon (using a fan/cyclone emoji or FontAwesome)
+        # Colored in Fourth Partner Energy Orange (#F37021)
+        loader_placeholder.markdown("""
+            <style>
+            @keyframes spin { 100% { transform: rotate(360deg); } }
+            .turbine-spinner { 
+                display: inline-block; 
+                animation: spin 1.5s linear infinite; 
+                font-size: 50px; 
+                color: #F37021;
+            }
+            .loader-container {
+                text-align: center;
+                padding: 40px;
+                background-color: #1E293B;
+                border-radius: 8px;
+                border: 1px solid #334155;
+            }
+            </style>
+            <div class="loader-container">
+                <div class="turbine-spinner">🌀</div>
+                <h3 style="color: #F8FAFC; margin-top: 15px;">Simulating 25 years of energy data...</h3>
+                <p style="color: #9CA3AF;">Please wait, running financial models.</p>
+            </div>
+            """, unsafe_allow_html=True)
             with open(temp_file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
                 
