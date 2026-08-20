@@ -134,6 +134,19 @@ class DashboardStat:
         ebitda_y1 = self.irr_table.loc[self.irr_table["Year"] == 1, "EBITDA_RsCr"].iloc[0]
         return capex / ebitda_y1
 
+    def calc_cumulative_payback_period(self):
+        if self.irr_table is None:
+            self.calc_irr_table()
+        current_val = 0
+        capex_ebitda = 0
+        for i in range(0, len(self.irr_table["Year"])):
+            this_year = self.irr_table["EBITDA_RsCr"][i]
+            current_val += this_year
+            if current_val >= 0:
+                capex_ebitda = (i-1) + (current_val - this_year) / this_year
+                break
+        return capex_ebitda
+
     def save_irr_table(self, path: str = "Revenue_Costs_EBITDA_Table.xlsx"):
         if self.irr_table is None:
             self.calc_irr_table()
@@ -177,13 +190,15 @@ class DashboardStat:
         self.save_irr_table(irr_table_path)
         irr = self.calc_irr()
         capex_ebitda = self.calc_capex_ebitda_ratio()
+        payback = self.calc_cumulative_payback_period()
         replacement = self.effective_replacement_comparison(year=1)
 
         return {
             "irr_table": self.irr_table,
             "irr": irr,
             "capex_to_ebitda_ratio": capex_ebitda,
-            **replacement,
+            "payback": payback,
+            **replacement
         }
 
 
@@ -337,14 +352,16 @@ if st.button("Run Simulation", type="primary"):
             
             # Display Metrics
             st.subheader("Key Performance Indicators")
-            metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+            metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
             
             # Displaying formatted numbers
             irr_val = results["irr"]
             metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
             metric_col2.metric("Capex/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
-            metric_col3.metric("Effective Replacement with BESS", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
-            metric_col4.metric("Effective Replacement without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+            metric_col3.metric("Cumulative Payback Period", f"{results['payback']:.2f}")
+            metric_col4.metric("Effective Replacement with BESS", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
+            metric_col5.metric("Effective Replacement without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+            
             
             # Output File Download
             st.markdown("### Download Simulation Results")
