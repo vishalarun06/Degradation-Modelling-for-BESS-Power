@@ -143,7 +143,7 @@ class DashboardStat:
             this_year = self.irr_table["EBITDA_RsCr"][i]
             current_val += this_year
             if current_val >= 0:
-                capex_ebitda = (i) - (current_val - this_year) / this_year
+                capex_ebitda = (i - 1) - (current_val - this_year) / this_year
                 break
         return capex_ebitda
 
