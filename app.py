@@ -193,7 +193,7 @@ col1, col2, col3 = st.columns([2, 2, 1])
 
 with col3:
     st.image("company_logo.png", width=200)
-st.image("company_logo.png", width=250)
+
 st.title("Wind-Solar BESS Simulation")
 st.markdown("Upload your generation and consumption, fill in the parameters for the plant, and run the simulation!")
 
