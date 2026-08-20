@@ -194,7 +194,7 @@ col1, col2, col3 = st.columns([2, 2, 1])
 with col3:
     st.image("company_logo.png", width=200)
 st.image("company_logo.png", width=250)
-st.title("⚡ Wind Solar BESS Simulation")
+st.title("Wind-Solar BESS Simulation")
 st.markdown("Upload your generation and consumption, fill in the parameters for the plant, and run the simulation!")
 
 # -- 1. File Handling: Download Template & Upload Filled File
@@ -262,7 +262,7 @@ st.divider()
 # -- 3. Execution & Results Display
 st.header("3. Run the Simulation!")
 
-if st.button("🚀 Run Simulation", type="primary"):
+if st.button("Run Simulation", type="primary"):
     if uploaded_file is None:
         st.error("Please upload the filled-in template file before running")
     else:
