@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 import os
+import plotly.express as px
 
 # Import the class from your secondary file
 # Ensure WindSolarBESS.py is in the same directory!
@@ -189,142 +190,128 @@ class DashboardStat:
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Wind-Solar and BESS Simulation", layout="wide")
 
-# Header Section
-st.image("company_logo.png", width=200) # Slightly scaled down for refinement
-st.title("Wind Solar BESS Simulation")
-st.markdown("<p style='color: #9CA3AF; margin-bottom: 2rem;'>Upload your generation and consumption, fill in the parameters for the plant, and run the simulation.</p>", unsafe_allow_html=True)
+st.markdown("""
+<style>
+div[data-testid="metric-container"] {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    padding: 5% 5% 5% 10%;
+    border-radius: 8px;
+    border-left: 5px solid #F37021;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+</style>
+""", unsafe_allow_html=True)
 
-# -- 1. File Handling Container
+# --- SIDEBAR: CONTROLS & PARAMETERS ---
+with st.sidebar:
+    st.image("company_logo.png", width=180)
+    st.markdown("### Simulation Parameters")
+    
+    st.markdown("**1. Core Capacities**")
+    solar_cap = st.number_input("Solar (MW)", value=150.0, step=10.0)
+    wind_cap = st.number_input("Wind (MW)", value=49.5, step=5.0)
+    bess_hours = st.number_input("BESS Hours", value=6.0, step=1.0)
+    
+    st.markdown("**2. Financials**")
+    tariff_input = st.number_input("Tariff (Rs/kWh)", value=6.0, step=0.5)
+    solar_capex = st.number_input("Solar CapEx (Mn)", value=40, step=1)
+    wind_capex = st.number_input("Wind CapEx (Mn)", value=90, step=1)
+    bess_capex = st.number_input("BESS CapEx (Mn)", value=10, step=1)
+
+    # Advanced parameters grouped in an expander to save space
+    with st.expander("⚙️ Advanced Settings (Degradation & Maint.)"):
+        st.markdown("**State of Charge & RTE**")
+        max_soc = st.number_input("Max SoC (%)", min_value=0, max_value=100, value=100, step=5)
+        min_soc = st.number_input("Min SoC (%)", min_value=0, max_value=100, value=0, step=5)
+        rte_year1 = st.number_input("RTE Year 1 (%)", min_value=0, max_value=100, value=85, step=5)
+        
+        st.markdown("**Degradation (%/yr)**")
+        solar_deg = st.number_input("Solar", value=0.5, step=0.1)
+        wind_deg = st.number_input("Wind", value=0.2, step=0.1)
+        bess_cap_deg = st.number_input("BESS Capacity", value=2.0, step=0.1)
+        bess_rte_deg = st.number_input("BESS RTE", value=0.1, step=0.1)
+        
+        st.markdown("**Maintenance (Lakh) & Escalation**")
+        solar_maint = st.number_input("Solar Maint", value=5.0, step=0.5)
+        wind_maint = st.number_input("Wind Maint", value=9.1, step=0.5)
+        bess_maint = st.number_input("BESS Maint", value=1.0, step=0.5)
+        cost_esc = st.number_input("Cost Escalation (%)", value=3.0, step=0.5)
+
+# --- MAIN CANVAS: DATA UPLOAD & RESULTS ---
+st.title("Wind Solar BESS Optimization")
+st.markdown("<p style='color: #9CA3AF;'>Configure parameters in the sidebar, upload your template, and execute the 25-year financial simulation.</p>", unsafe_allow_html=True)
+
+# 1. File Handling Container
 with st.container(border=True):
-    st.subheader("1. Data Input")
     col_down, col_up = st.columns(2)
-
     with col_down:
         st.markdown("**1. Download Template**")
-        st.caption("Download the empty Excel template, fill in your generation and consumption data.")
         try:
             with open("Template.xlsx", "rb") as template_file:
-                st.download_button(
-                    label="Download Template File",
-                    data=template_file,
-                    file_name="Template.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                st.download_button("Download Template File", data=template_file, file_name="Template.xlsx", use_container_width=True)
         except FileNotFoundError:
-            st.warning("Template.xlsx not found in the local directory. Please ensure it is present for users to download.")
+            st.warning("Template.xlsx missing.")
 
     with col_up:
         st.markdown("**2. Upload Data**")
-        st.caption("Upload your completed Excel file to proceed.")
         uploaded_file = st.file_uploader("Upload filled template", type=["xlsx"], label_visibility="collapsed")
 
+st.write("") # Spacer
 
-# -- 2. Parameters Grouped in Containers
-st.subheader("2. Simulation Parameters")
-
-# Container 1: Specs
-with st.container(border=True):
-    st.markdown("**Generation, Storage & SoC**")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    solar_cap = col1.number_input("Solar (MW)", value=150.0, step=10.0)
-    wind_cap = col2.number_input("Wind (MW)", value=49.5, step=5.0)
-    bess_hours = col3.number_input("BESS Hours", value=6.0, step=1.0)
-    max_soc = col4.number_input("Max SoC (%)", min_value=0, max_value=100, value=100, step=5)
-    min_soc = col5.number_input("Min SoC (%)", min_value=0, max_value=100, value=0, step=5)
-
-# Container 2: Degradation
-with st.container(border=True):
-    st.markdown("**Degradation (%/yr)**")
-    col6, col7, col8, col9 = st.columns(4)
-    solar_deg = col6.number_input("Solar", value=0.5, step=0.1)
-    wind_deg = col7.number_input("Wind", value=0.2, step=0.1)
-    bess_cap_deg = col8.number_input("BESS Capacity", value=2.0, step=0.1)
-    bess_rte_deg = col9.number_input("BESS RTE", value=0.1, step=0.1)
-
-# Container 3: Financials
-with st.container(border=True):
-    st.markdown("**Financials & Maintenance**")
-    
-    col10, col11, col12, col13 = st.columns(4)
-    solar_capex = col10.number_input("Solar CapEx (Mn)", value=40, step=1)
-    wind_capex = col11.number_input("Wind CapEx (Mn)", value=90, step=1)
-    bess_capex = col12.number_input("BESS CapEx (Mn)", value=10, step=1)
-    rte_year1 = col13.number_input("RTE Year 1 (%)", min_value=0, max_value=100, value=85, step=5)
-    
-    st.divider()
-    
-    col14, col15, col16, col17, col18 = st.columns(5)
-    solar_maint = col14.number_input("Solar Maint (Lakh)", value=5.0, step=0.5)
-    wind_maint = col15.number_input("Wind Maint (Lakh)", value=9.1, step=0.5)
-    bess_maint = col16.number_input("BESS Maint (Lakh)", value=1.0, step=0.5)
-    cost_esc = col17.number_input("Cost Escalation (%)", value=3.0, step=0.5)
-    tariff_input = col18.number_input("Tariff (Rs/kWh)", value=6.0, step=0.5)
-
-
-# -- 3. Execution & Results
-st.subheader("3. Execution")
-
-if st.button("Run Simulation", type="primary", use_container_width=True):
+# 2. Execution button
+if st.button("Run Financial Simulation", type="primary", use_container_width=True):
     if uploaded_file is None:
         st.error("Please upload the filled-in template file before running.")
     else:
-        with st.spinner("Running 25-year simulation..."):
+        with st.spinner("Simulating 25-year generation and cash flows..."):
             temp_file_path = "temp_uploaded_gencons.xlsx"
             with open(temp_file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
                 
             try:
-                # Initialize the dashboard class with UI inputs
+                # Initialize DashboardStat (Assume dash is initialized exactly as you had it)
                 dash = DashboardStat(
-                    gencons=temp_file_path,
-                    solar_capacity=solar_cap,
-                    wind_capacity=wind_cap,
-                    BESS_hours=bess_hours,
-                    max_SoC_perc=max_soc,
-                    min_SoC_perc=min_soc,
-                    solar_gen_degrad=solar_deg,
-                    wind_gen_degrad=wind_deg,
-                    BESS_capacity_degrad=bess_cap_deg,
-                    RTE_degrad=bess_rte_deg,
-                    solar_maintenance=solar_maint * 100000,
-                    wind_maintenance=wind_maint * 100000,
-                    BESS_maintenance=bess_maint * 100000,
-                    costs_escalation=cost_esc,
-                    tariff=tariff_input,
-                    solar_capex=solar_capex,
-                    wind_capex=wind_capex,
-                    BESS_capex=bess_capex,
-                    RTE=rte_year1
+                    gencons=temp_file_path, solar_capacity=solar_cap, wind_capacity=wind_cap, BESS_hours=bess_hours,
+                    max_SoC_perc=max_soc, min_SoC_perc=min_soc, solar_gen_degrad=solar_deg, wind_gen_degrad=wind_deg,
+                    BESS_capacity_degrad=bess_cap_deg, RTE_degrad=bess_rte_deg, solar_maintenance=solar_maint * 100000,
+                    wind_maintenance=wind_maint * 100000, BESS_maintenance=bess_maint * 100000, costs_escalation=cost_esc,
+                    tariff=tariff_input, solar_capex=solar_capex, wind_capex=wind_capex, BESS_capex=bess_capex, RTE=rte_year1
                 )
                 
                 output_path = "Revenue_Costs_EBITDA_Table.xlsx"
                 results = dash.run_dashboard(irr_table_path=output_path)
                 
-                st.success("Optimization successfully completed.")
+                # --- RESULTS DASHBOARD ---
+                st.divider()
+                st.subheader("Financial Overview")
                 
-                # Metrics wrapped in a container
-                with st.container(border=True):
-                    st.markdown("**Key Performance Indicators**")
-                    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-                    
-                    irr_val = results["irr"]
-                    metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
-                    metric_col2.metric("CapEx/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
-                    metric_col3.metric("Effective Repl. (w/ BESS)", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
-                    metric_col4.metric("Effective Repl. (w/o BESS)", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+                # Top Row Metrics (Styled by our custom CSS above)
+                metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+                irr_val = results["irr"]
+                metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
+                metric_col2.metric("CapEx/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
+                metric_col3.metric("Effective Repl. (w/ BESS)", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
+                metric_col4.metric("Effective Repl. (w/o BESS)", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+                
+                st.write("") # Spacer
+                
+                # Professional Chart using Plotly
+                st.markdown("**25-Year Cash Flow Projection (EBITDA)**")
+                df_chart = results["irr_table"][results["irr_table"]["Year"] > 0] # Filter out Year 0 (CapEx)
+                fig = px.bar(df_chart, x="Year", y=["Revenue_RsCr", "Costs_RsCr", "EBITDA_RsCr"], 
+                             barmode='group',
+                             color_discrete_sequence=["#38BDF8", "#EF4444", "#F37021"],
+                             labels={"value": "Rs Cr", "variable": "Metric"})
+                fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=30, b=0))
+                st.plotly_chart(fig, use_container_width=True)
                 
                 # Output File Download
                 with open(output_path, "rb") as out_file:
-                    st.download_button(
-                        label="Download Financial Results (Excel)",
-                        data=out_file,
-                        file_name="Revenue_Costs_EBITDA_Table.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
+                    st.download_button("Download Full Financial Model (Excel)", data=out_file, file_name="Revenue_Costs_EBITDA_Table.xlsx", use_container_width=True)
             
             except Exception as e:
                 st.error(f"An error occurred during simulation: {e}")
-            
             finally:
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
