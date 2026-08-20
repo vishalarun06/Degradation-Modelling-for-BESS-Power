@@ -300,6 +300,7 @@ if st.button("Run Simulation", type="primary"):
                 results = dash.run_dashboard(irr_table_path=output_path)
                 
                 st.success("Optimisation successfully completed!")
+                st.balloons()
                 
                 # Display Metrics
                 st.subheader("Key Performance Indicators")
