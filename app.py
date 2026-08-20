@@ -270,8 +270,7 @@ if st.button("Run Simulation", type="primary"):
         # Create an empty placeholder container for our custom loader
         loader_placeholder = st.empty()
         
-        # Inject custom HTML/CSS for a spinning turbine icon (using a fan/cyclone emoji or FontAwesome)
-        # Colored in Fourth Partner Energy Orange (#F37021)
+        # Inject custom HTML/CSS for a spinning turbine icon
         loader_placeholder.markdown("""
             <style>
             @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -295,13 +294,18 @@ if st.button("Run Simulation", type="primary"):
                 <p style="color: #9CA3AF;">Please wait, running financial models.</p>
             </div>
             """, unsafe_allow_html=True)
-        with open(uploaded_file, "wb") as f:
+            
+        # FIX 1: Explicitly define the temporary file path string
+        temp_file_path = "temp_uploaded_gencons.xlsx"
+        
+        # FIX 2: Open using the string path, not the Streamlit object
+        with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
                 
         try:
             # Initialize the dashboard class with UI inputs
             dash = DashboardStat(
-                gencons=uploaded_file,
+                gencons=temp_file_path, # FIX 3: Pass the string path here
                 solar_capacity=solar_cap,
                 wind_capacity=wind_cap,
                 BESS_hours=bess_hours,
@@ -324,6 +328,9 @@ if st.button("Run Simulation", type="primary"):
             
             output_path = "Revenue_Costs_EBITDA_Table.xlsx"
             results = dash.run_dashboard(irr_table_path=output_path)
+            
+            # FIX 4: Clear the loading animation block now that data is ready
+            loader_placeholder.empty()
             
             st.success("Optimisation successfully completed!")
             st.balloons()
@@ -350,9 +357,11 @@ if st.button("Run Simulation", type="primary"):
                 )
             
         except Exception as e:
+            # Also clear the loader if an error happens, otherwise it blocks the screen
+            loader_placeholder.empty() 
             st.error(f"An error occurred during simulation: {e}")
             
         finally:
-                # Clean up temporary uploaded file
-            if os.path.exists(temp_file_path):
+            # Clean up temporary uploaded file safely
+            if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
