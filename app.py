@@ -131,8 +131,8 @@ class DashboardStat:
         if self.irr_table is None:
             self.calc_irr_table()
         capex = self.irr_table.loc[self.irr_table["Year"] == 0, "Costs_RsCr"].iloc[0]
-        ebitda = self.irr_table.loc[self.irr_table["Year"] == 1, "EBITDA_RsCr"].iloc[0]
-        return capex / avg_ebitda
+        ebitda_y1 = self.irr_table.loc[self.irr_table["Year"] == 1, "EBITDA_RsCr"].iloc[0]
+        return capex / ebitda_y1
 
     def save_irr_table(self, path: str = "Revenue_Costs_EBITDA_Table.xlsx"):
         if self.irr_table is None:
