@@ -358,9 +358,9 @@ if st.button("Run Simulation", type="primary"):
             irr_val = results["irr"]
             metric_col1.metric("Project IRR", f"{irr_val:.2%}" if not pd.isna(irr_val) else "N/A")
             metric_col2.metric("Capex/EBITDA Ratio", f"{results['capex_to_ebitda_ratio']:.2f}")
-            metric_col3.metric("Cumulative Payback Period", f"{results['payback']:.2f}")
+            metric_col3.metric("Cumulative Payback Period", f"{results['payback']:.2f} Years")
             metric_col4.metric("Effective Replacement with BESS", f"{(results['Effective_Replacement_With_BESS']*100):.2f}%")
-            metric_col5.metric("Effective Replacement without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
+            metric_col5.metric("Effective Replacement \n without BESS", f"{(results['Effective_Replacement_Without_BESS']*100):.2f}%")
             
             
             # Output File Download
